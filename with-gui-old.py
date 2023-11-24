@@ -1,4 +1,5 @@
 import pygame
+import time
 
 pygame.font.init()
 
@@ -12,7 +13,7 @@ pygame.display.set_icon(img)
 
 x = 0
 y = 0
-dif = 500/9
+gap = 500/9
 val = 0
 # Default Sudoku Board.
 grid = [[0, 6, 0, 0, 7, 0, 0, 3, 0],
@@ -28,63 +29,60 @@ grid = [[0, 6, 0, 0, 7, 0, 0, 3, 0],
         [0, 3, 0, 0, 6, 0, 0, 7, 0]]
 
 # Load test fonts for future use
-font1 = pygame.font.SysFont('arial', 20)
-font2 = pygame.font.SysFont('arial', 15)
+font = pygame.font.SysFont('arial', 13)
+font2 = pygame.font.SysFont('arial', 20)
 
 
-def get_cord(pos):
+def setXY(pos):
     global x
-    x = pos[0] // dif
+    x = int(pos[0] // gap)
     global y
-    y = pos[1] // dif
+    y = int(pos[1] // gap)
 
 
 # Highlight the cell selected
-def draw_box():
+def red_box():
     for i in range(2):
-        pygame.draw.line(screen, (255, 0, 0), (x*dif - 3, (y+i)*dif), (x*dif + dif + 3, (y+i)*dif), 7)
-        pygame.draw.line(screen, (255, 0, 0), ((x+i)*dif, y*dif), ((x+i)*dif, y*dif + dif), 7)
-
-    # Function to draw required lines for making Sudoku grid
+        pygame.draw.line(screen, (255, 0, 0), (x * gap, (y + i) * gap), (x * gap + gap, (y + i) * gap), 1) #top, bottom
+        pygame.draw.line(screen, (255, 0, 0), ((x + i) * gap, y * gap), ((x + i) * gap, y * gap + gap), 1) #left, right
 
 
+# Function to draw required lines for making Sudoku grid
 def draw():
     # Draw the lines
-
     for i in range(9):
         for j in range(9):
             if grid[i][j] != 0:
                 # Fill blue color in already numbered grid
-                pygame.draw.rect(screen, (101, 112, 110), (i*dif, j*dif, dif+1, dif+1))
-
+                pygame.draw.rect(screen, (101, 112, 110), (i * gap, j * gap, gap, gap))
                 # Fill gird with default numbers specified
-                text1 = font1.render(str(grid[i][j]), 1, (0, 0, 0))
-                screen.blit(text1, (i*dif + 15, j*dif + 15))
+                text1 = font2.render(str(grid[i][j]), 1, (0, 0, 0))
+                screen.blit(text1, (i * gap + 15, j * gap + 15))
             # Draw lines horizontally and vertically to form grid
     for i in range(10):
-        if i % 3 == 0:
+        if i in [3, 6]:
             thick = 7
         else:
-            thick = 1
-        pygame.draw.line(screen, (0, 0, 0), (0, i * dif), (500, i * dif), thick)
-        pygame.draw.line(screen, (0, 0, 0), (i * dif, 0), (i * dif, 500), thick)
+            thick = 3
+        pygame.draw.line(screen, (0, 0, 0), (0, i * gap), (500, i * gap), thick)
+        pygame.draw.line(screen, (0, 0, 0), (i * gap, 0), (i * gap, 500), thick)
 
     # Fill value entered in cell
 
 
 def draw_val(val):
-    text1 = font1.render(str(val), 1, (0, 0, 0))
-    screen.blit(text1, (x * dif + 15, y * dif + 15))
+    text1 = font.render(str(val), 1, (0, 0, 0))
+    screen.blit(text1, (x * gap + 15, y * gap + 15))
 
 
 # Raise error when wrong value entered
-def raise_error1():
-    text1 = font1.render('Wrong', 1, (255, 255, 255))
+def errorWrong():
+    text1 = font.render('Wrong', 1, (0, 0, 0))
     screen.blit(text1, (20, 570))
 
 
-def raise_error2():
-    text1 = font1.render('Invalid Key', 1, (255, 255, 255))
+def errorInvalidKey():
+    text1 = font.render('Invalid Key', 1, (0, 0, 0))
     screen.blit(text1, (20, 570))
 
 
@@ -125,7 +123,7 @@ def solve(grid, i, j):
             #screen.fill((255, 255, 255))
             screen.blit(bg, (0, 0))
             draw()
-            draw_box()
+            red_box()
             pygame.display.update()
             pygame.time.delay(20)
             if solve(grid, i, j) == 1:
@@ -137,7 +135,7 @@ def solve(grid, i, j):
             screen.blit(bg, (0, 0))
 
             draw()
-            draw_box()
+            red_box()
             pygame.display.update()
             pygame.time.delay(50)
     return False
@@ -145,23 +143,15 @@ def solve(grid, i, j):
 
 # Display instruction for the game
 def instruction():
-    text1 = font2.render('Press: R to Reset, C to Clear and Press D to see sudoku Dogi', 1, (0, 0, 0))
-    text2 = font2.render('Enter Values', 1, (0, 0, 0))
+    text1 = font.render('Press: R to Reset, C to Clear, Return to Solve & Press D for Sudoku Doggy', 1, (0, 0, 0))
+    text2 = font.render('Enter Values', 1, (0, 0, 0))
     screen.blit(text1, (20, 520))
     screen.blit(text2, (20, 540))
 
-
-# Display options when solved
-def result():
-    text1 = font1.render('Done dona done', 1, (255, 255, 255))
-    screen.blit(text1, (20, 570))
-
-
 run = True
-flag1 = 0
-flag2 = 0
-rs = 0
-error = 0
+red = 0
+sol = 0
+dog = 0
 
 # The loop that keeps the window running
 while run:
@@ -176,23 +166,23 @@ while run:
             run = False
         # Get the mouse postion to insert number
         if event.type == pygame.MOUSEBUTTONDOWN:
-            flag1 = 1
+            red = 1
             pos = pygame.mouse.get_pos()
-            get_cord(pos)
+            setXY(pos)
         # Get the number to be inserted if key pressed
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 x -= 1
-                flag1 = 1
+                red = 1
             if event.key == pygame.K_RIGHT:
                 x += 1
-                flag1 = 1
+                red = 1
             if event.key == pygame.K_UP:
                 y -= 1
-                flag1 = 1
+                red = 1
             if event.key == pygame.K_DOWN:
                 y += 1
-                flag1 = 1
+                red = 1
             if event.key == pygame.K_1:
                 val = 1
             if event.key == pygame.K_2:
@@ -212,12 +202,10 @@ while run:
             if event.key == pygame.K_9:
                 val = 9
             if event.key == pygame.K_RETURN:
-                flag2 = 1
+                sol = 1
             # If C is pressed clear the sudoku board
             if event.key == pygame.K_c:
-                rs = 0
-                error = 0
-                flag2 = 0
+                sol = 0
                 grid = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -231,9 +219,7 @@ while run:
                         [0, 0, 0, 0, 0, 0, 0, 0, 0]]
             # If R is pressed reset the board to default
             if event.key == pygame.K_r:
-                rs = 0
-                error = 0
-                flag2 = 0
+                sol = 0
                 grid = [[0, 6, 0, 0, 7, 0, 0, 3, 0],
                         [5, 0, 7, 6, 0, 1, 4, 0, 9],
                         [0, 4, 0, 0, 8, 0, 0, 1, 0],
@@ -246,38 +232,31 @@ while run:
                         [2, 0, 5, 3, 0, 7, 8, 0, 1],
                         [0, 3, 0, 0, 6, 0, 0, 7, 0]]
             if event.key == pygame.K_d:
-                flag2 = 3
+                dog = 1
 
 
-    if flag2 == 1:
+    if sol == 1:
         if solve(grid, 0, 0) == False:
-            error = 1
+            errorWrong()
         else:
-            rs = 1
-        flag2 = 0
+            text1 = font.render('Done', 1, (0, 0, 0))
+            screen.blit(text1, (20, 570))
+        sol = 0
     if val != 0:
         draw_val(val)
-        # print(x)
-        # print(y)
-        if valid(grid, int(x), int(y), val) == True:
-            grid[int(x)][int(y)] = val
-            flag1 = 0
+        if valid(grid, x, y, val) == True:
+            grid[x][y] = val
+            red = 0
         else:
-            grid[int(x)][int(y)] = 0
-            raise_error2()
+            grid[x][y] = 0
+            errorInvalidKey()
         val = 0
-
-    if error == 1:
-        raise_error1()
-    if rs == 1:
-        result()
     draw()
-    if flag1 == 1:
-        draw_box()
+    if red == 1:
+        red_box()
     instruction()
-    if flag2 == 3:
+    if dog == 1:
         screen.blit(bg, (0, 0))
-    #pygame.display.flip()
     pygame.display.update()
 
 pygame.quit()
